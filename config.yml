@@ -1,0 +1,32 @@
+name: "Gated_Refiner_V1"
+device: "cuda"
+resume_state: /content/experiments/Gated_Refiner_V1_20260227_202014/checkpoints/refiner_iter_500.pth   # Put the path to your .pth file here when you want to resume, otherwise null
+total_iters: 50000
+val_freq: 100
+save_freq: 100
+print_freq: 100
+
+data:
+  train:
+    degraded: "./fake_data/train/degraded"
+    histo: "./fake_data/train/histo_out"
+    gt: "./fake_data/train/gt"
+    mode: "ram"        # 'ram' or 'disk'
+    batch_size: 16
+    crop_size: 256
+    num_workers: 4
+  val:
+    degraded: "./fake_data/val/degraded"
+    histo: "./fake_data/val/histo_out"
+    gt: "./fake_data/val/gt"
+    mode: "disk"
+    batch_size: 1      # Keep at 1 for full-image validation
+    crop_size: null    # No crop during validation
+
+optimizer:
+  lr: 0.0002
+  weight_decay: 0.0001
+
+loss:
+  lambda_lpips: 0.1
+  lambda_sparse: 0.005
