@@ -1,0 +1,14 @@
+name: "Refiner_Validation"
+device: "cuda"
+
+# Put your saved checkpoint path here
+ckpt_path: "experiments/Gated_Refiner_V1_20260227_202912/checkpoints/refiner_iter_700.pth"
+
+save_images: true
+save_attention: true     # Saves a black/white heatmap of where the gate opens
+save_dir: "val_results_fake/"
+
+data:
+  degraded: "./fake_data/val/degraded"
+  histo: "./fake_data/val/histo_out"
+  gt: "./fake_data/val/gt"
