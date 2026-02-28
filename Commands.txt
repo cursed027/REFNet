@@ -1,0 +1,13 @@
+# TRAIN
+```
+    !python ./REFNet/train.py -opt ./REFNet/train_config.yml
+```
+
+# INFERENCE 
+
+```
+  !python /content/REFNet/inference.py -opt /content/REFNet/inference_config.yml
+```
+
+#DEPS
+  - make sure to install : pip install lpips
