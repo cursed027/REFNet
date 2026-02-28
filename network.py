@@ -5,19 +5,17 @@ class DoubleConv(nn.Module):
     def __init__(self, in_ch, out_ch):
         super().__init__()
         self.net = nn.Sequential(
-            nn.Conv2d(in_ch, out_ch, kernel_size=3, padding=1, bias=False),
-            nn.InstanceNorm2d(out_ch),
+            nn.Conv2d(in_ch, out_ch, kernel_size=3, padding=1),
             nn.LeakyReLU(0.2, inplace=True),
-            nn.Conv2d(out_ch, out_ch, kernel_size=3, padding=1, bias=False),
-            nn.InstanceNorm2d(out_ch),
+            nn.Conv2d(out_ch, out_ch, kernel_size=3, padding=1),
             nn.LeakyReLU(0.2, inplace=True)
         )
-    def forward(self, x): return self.net(x)
+    def forward(self, x): 
+        return self.net(x)
 
 class GatedRefinerUNet(nn.Module):
     def __init__(self):
         super().__init__()
-        # 9 in -> 32 -> 64 -> 128 -> 256
         self.inc = DoubleConv(9, 32)
         self.down1 = nn.Sequential(nn.MaxPool2d(2), DoubleConv(32, 64))
         self.down2 = nn.Sequential(nn.MaxPool2d(2), DoubleConv(64, 128))
@@ -33,9 +31,12 @@ class GatedRefinerUNet(nn.Module):
         self.conv_up3 = DoubleConv(64, 32)
         
         self.outc = nn.Conv2d(32, 4, kernel_size=1)
+        
+        # Initialized at 0.5 to prevent aggressive early-training color shifts
+        self.alpha = nn.Parameter(torch.tensor(0.5))
 
     def forward(self, x):
-        I_h = x[:, 3:6, :, :] # Extract Clean Histoformer Output
+        I_h = x[:, 3:6, :, :] 
         
         x1 = self.inc(x)
         x2 = self.down1(x1)
@@ -48,9 +49,11 @@ class GatedRefinerUNet(nn.Module):
         
         out = self.outc(d1)
         
-        # --- GATING ---
-        R = out[:, 0:3, :, :]                 # Texture Residual
-        A = torch.sigmoid(out[:, 3:4, :, :])  # Attention Gate [0,1]
+        R = out[:, 0:3, :, :]                 
+        A = torch.sigmoid(out[:, 3:4, :, :])  
         
-        I_final = I_h + (A * R)
-        return I_final, A
+        # --- THE SAFETY CLAMP: ReLU prevents negative sign flips ---
+        I_final = I_h + torch.relu(self.alpha) * (A * R)
+        
+        # Return R so we can track its magnitude in the training loop
+        return I_final, A, R
