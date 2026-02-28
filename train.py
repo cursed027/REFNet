@@ -103,18 +103,23 @@ def main():
         inputs, gt = inputs.to(device), gt.to(device)
         
         optimizer.zero_grad()
-        # Unpack the 3 variables now
+        # Unpack the 3 variables
         I_final, A, R = model(inputs) 
         
         loss, l_char, l_lpips, l_sparse = criterion(I_final, gt, A)
         loss.backward()
+        
+        # --- NEW: GRADIENT CLIPPING CIRCUIT BREAKER ---
+        torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=1.0)
+        
         optimizer.step()
         scheduler.step()
 
-        # --- EXTRACT GATE & RESIDUAL METRICS ---
+        # --- EXTRACT GATE, RESIDUAL, AND ALPHA METRICS ---
         a_mean = A.mean().item()
         a_max = A.max().item()
-        r_mean = R.abs().mean().item()  # The hygiene check
+        r_mean = R.abs().mean().item()
+        alpha_val = torch.relu(model.alpha).item() # The new Alpha tracker
 
         # --- LOGGING & ETA CALCULATOR ---
         if current_iter % config['print_freq'] == 0:
@@ -124,7 +129,7 @@ def main():
             
             log(f"Iter [{current_iter:05d}/{config['total_iters']}] "
                 f"| Loss: {loss.item():.4f} | Charb: {l_char.item():.4f} | LPIPS: {l_lpips.item():.4f} "
-                f"| Gate [μ:{a_mean:.3f}, max:{a_max:.3f}] | Res(μ): {r_mean:.3f} "
+                f"| Gate [μ:{a_mean:.3f}, max:{a_max:.3f}] | Res(μ): {r_mean:.3f} | α: {alpha_val:.3f} "
                 f"| {iter_time:.2f} s/it | ETA: {format_time(eta_seconds)}")
             
             iter_start_time = time.time() # Reset timer for next block
