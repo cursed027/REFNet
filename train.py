@@ -55,7 +55,7 @@ def main():
     
     train_loader = DataLoader(
         train_set, batch_size=config['data']['train']['batch_size'], 
-        shuffle=True, num_workers=4, pin_memory=True, 
+        shuffle=True, num_workers=2, pin_memory=True, 
         prefetch_factor=4, persistent_workers=True
     )
     
@@ -136,7 +136,7 @@ def main():
             with torch.no_grad():
                 for v_in, v_gt in val_loader:
                     v_in, v_gt = v_in.to(device), v_gt.to(device)
-                    v_final, _ = model(v_in)
+                    v_final, _, _ = model(v_in)
                     mse = torch.mean((v_final - v_gt)**2)
                     # Prevent math domain error on perfect identical noise
                     if mse.item() > 0:
