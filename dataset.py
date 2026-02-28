@@ -33,6 +33,7 @@ class RefinerDataset(Dataset):
         I_gt = self._load_image_cv2(os.path.join(self.gt_dir, img_name))
 
         # --- AUGMENTATIONS ---
+        
         # 1. Random Crop (Using pure PyTorch slicing for speed)
         if self.crop_size and I_d.shape[1] >= self.crop_size and I_d.shape[2] >= self.crop_size:
             h_start = random.randint(0, I_d.shape[1] - self.crop_size)
@@ -53,3 +54,4 @@ class RefinerDataset(Dataset):
         input_9ch = torch.cat([I_d, I_h, diff], dim=0)
         
         return input_9ch, I_gt
+        
