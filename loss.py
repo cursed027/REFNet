@@ -29,3 +29,4 @@ class RefinerLoss(nn.Module):
         
         total = loss_char + (self.lambda_lpips * loss_lpips) + (self.lambda_sparse * loss_sparse)
         return total, loss_char, loss_lpips, loss_sparse
+
