@@ -24,3 +24,4 @@ def create_fake_dataset(base_dir, num_images=20):
 if __name__ == "__main__":
     create_fake_dataset("./fake_data/train")
     create_fake_dataset("./fake_data/val", num_images=5)
+    
